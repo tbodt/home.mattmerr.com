@@ -36,7 +36,7 @@ img#background {
   color: white;
   opacity: .7;
   white-space: pre;
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'Menlo', 'Roboto Mono', monospace;
   line-height: 1em;
 }
 
