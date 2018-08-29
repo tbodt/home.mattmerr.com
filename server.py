@@ -1,0 +1,27 @@
+from flask import Flask, Response, render_template, request
+from subprocess import Popen, PIPE
+import random
+
+app = Flask(__name__)
+
+images = [
+        "https://lh3.googleusercontent.com/dutT_GAydJfk11scy6RB7YYcfDK4hrDr8KpF1xPtdFDrMol7P63g0WXgkIPWeHsGE_gZaltJiVuIwhdPL6TsUmSyByh0f24gXJS0AVI2KlS65OhURxoNrk5Sp4p1ZOkBPP7Qlo3A6WQL4oWNMLZyPiHRxQwTYfgYOHcoQkZqk0Fi6kQw_hc4TdXGCsu0YMj2xndoYqx5vb4gVI2YhLElGKLWRiYjrsDWkL4T2Gxp2hZQDU7cfBijV1rKbTGInqTeNI3CqxQwnEZxFilZ1SwFUF1dnrTE377N1gUzzoCd4FZalkECJT6V56XqW5XgB-9lp16aAxwAe3e8ZlAfxDF3sEH_WuXoit5tUmsE5ajsirJ7FwPOA7PoRH8yocLI_Mv3Pll5Ku-2P9dYQL57IZWRP97ompyBft26UudT_oVMJCQYNOanP6EOwn0NSqr-PESx8-60Nmbh77hXJD7XAwZIWZNEnjxPUKhLhByPX_6Dmo4Gw50sPD0Mx2VjsYIo0oxanuYob6CZrXZNQvxUFHuBq98Ukqp0VZ3l5rMXzaKFKct8WEWrTlbeUv7MWxmyPplSn24tey2bWWcYQTaXw08rl5kYO-yIl4fU3QQdEDj5i3GPh1z2bxAP2dkYI6-DwFQ=w956-h717-no",
+        "https://lh3.googleusercontent.com/qPKXrLvffo5w9_bp5EPY4aTCPn2anKVB5-jkwkmNKOzn8N_sfKYBIS7jIaGqKJXYLhSPM1HnCpQa4jT8yXTFjVxS64PHTsn-G9mcTYCg7YTdGF1Au-Wbis9NgTHE4Mk8AcY1LVGQGTYzvRS_CYH_FMLi6bi75At7iuYukLNKooFlXhQfdLJjd0p2gSxcS-PQ_fRjf_V8vhI_rL96JyCfGD2NLK-mG6vKhBYP-K6xl9HNQyx54x4KpU-TrEM_ruCy7nLxKv0ww9FJJhYv5zW1FyenYlr7OtUk4vG_fgrQOOaYhJum0g_0cEv7Yb8DRhj9S9qtltxSOPjzp7onuo9qI-7wDy9mN-2TO0bdSsmSscB5yM-chUTJxAEMI6RQ_YqmKRl21GkEG95hLMFxF7nLSz68Vy-kC-eK1ogBaPnMWOvblexi9q5ofR5oJLkJ691e5_Ir3wdLsceVuf41X_KkhjBiNyoG3XJAuo6fLIG5HHqG5TCWAUASEpXG4OVdZSZ03py2Ck1vMk9kRxoFmnmuEIKG6OSk_ke4EoUEBq7iOzAsZmTUGJvIj_fZFn7pvgQAYDFLzt6aXNfkkA4Vjq_H8LfXCaktTXI0D6e1TK4UVM971EpdXx-jZkrjmlgr0Ss=w956-h717-no",
+        "https://lh3.googleusercontent.com/G8-y-TwZ14llqVFhKzDj3qjTN6J1ns3Vfd66dV-KL3WplkmoeKUcMZF6avrC9BkSiRsbpk1MQiEuDbzcfPzQhtu5TKPsFk3Zpnlmw6YBEbEwdreBh__1NCS1oFvA4DsCsSHHnp35h_PmoyU0sVcecOJiWmdOKhaW-7t-Zmd4cYJqZZq5Ba2KDYQpQA-VP93ZMT3M5F8wgifz7lpPZlznVR-tLZzqd6SK226JZ9PTjf_BON5EDZ2M9AbVkjkaUQlkjfM5t0z3R9q7wTAoDO-x5Zag7MCtuFUT1QVk1ZR7YQ_dccWLYa75L5-xFG6B-rR-1RmIGvMExo1laFSaWPZ13bWcVg7Nm74_3Q8Ea6xdLNUDtpGyk0iC2MIHzFvp1RNPsrNzigPKMKuaOV6QhVnUi72Z7Gxrw8fYkGVcz7GIhdR-TKnw_nPJMqYinXGfaNCJMxVgLaeyH1XQKjVkuuX0yVoR6sYUscRO_v5Iu-10ZYwHF8QqDtuE7TMkZNhWv_pidoKSOToa--u6XIsmimq7aYh-PbmzYqvxY6KmDcPlcLhvWvIcl8YUhcDOr7EZHGn9jDLp-y9TjraGWB80s63g9WtD60Qjjh4e1CKohnjvT4isN5fID7REwLUCkvPbWlI=w956-h717-no",
+        "https://lh3.googleusercontent.com/DS6k_Vc7hUJRaYOWlGKOxtu1wvm2UOlgFo-TGeWPlgHKqAREENLZxPao83qfYZDYC-9xCCfwTeUVs5FIu4O_JFpODSbeA3iNDaPK4LyEa_VYIT15s8Jk1YzFkIJOVHvt9mu67zOhPMVMkJEuDfE-Im2IbPInMwgS2HMSoBtMXESOHIjYfDre4S3vLDMVgQltQKk3XNjujz5jliLGpX1hrkt1NvUcqaJRpTWnF24kys_sHZXibLXTvAkSWzz0PsHiBSokmCISEl7c4qQZCqSo1KiNRARxmqnJVwVFMXz9GhVflTYSnWz_d2dm6caEsqP3DwDIbJ5WIEIHDopBinB2JaIwH-zOIxBPwHNe86CSf2BvOL-ZKbYiuJQuApqsy5qxyq7y0zoqnFI_cQDo_v-ScjdaQzwTDKS1UTexKAbYoQKV89vcsBP7_SEO5BNjUU4Y4z6TA0koXeaXtklf4cXdezvLv9ivguGdqVSbu2kXXJHBbxdEmThhguqOXM42GtubrvwSQVkQRqdK1j_CvswZWbeApgDMW5WGCB6qivqfguXOTBlZ0Xiw9eIBon1yYmw7mQuP6LODb-9NZDGmF6Aia8UDAG5ogVNIJ_IuFPWMNjuX80VBh_XcMYEeV9oTJmw=w956-h717-no",
+        ]
+
+def RandomImage():
+    return random.choice(images)
+
+
+def Headline():
+    p1 = Popen(["date", "-I"], stdout=PIPE)
+    p2 = Popen(["toilet", "-f", "shadow"], stdin=p1.stdout, stdout=PIPE)
+    p1.stdout.close()
+    return p2.communicate()[0].decode("utf-8")
+
+@app.route('/')
+def Index():
+    return render_template('index.html', image=RandomImage(), headline=Headline())
+
